@@ -9,11 +9,12 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import logging
 import sys
 import os
+import time
 from typing import Optional
 
 from config import config
 from app.extensions import (
-    db, migrate, jwt, cache, limiter, socketio, celery, 
+    db, migrate, jwt, cache, limiter, socketio, celery,
     mail, talisman, cors, prometheus_metrics, sentry
 )
 from app.utils.logging import configure_logging
@@ -21,14 +22,19 @@ from app.errors import register_error_handlers
 from app.api.v1 import api_bp
 from app.cli import register_commands
 
+# Import new blueprints (to be registered)
+from app.api.v1 import (
+    live_sessions, admissions, registrations, exams, financials,
+    hostel, library, staff, alumni, curriculum
+)
+
+
 def create_app(config_name: Optional[str] = None) -> Flask:
     """
     Flask application factory.
-    
     Args:
         config_name: The configuration to use (development, testing, production).
                      If None, determined by FLASK_ENV.
-    
     Returns:
         Configured Flask application.
     """
@@ -50,11 +56,11 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     jwt.init_app(app)
     cache.init_app(app)
     limiter.init_app(app)
-    socketio.init_app(app, 
-                     message_queue=app.config['SOCKETIO_MESSAGE_QUEUE'],
-                     cors_allowed_origins=app.config['SOCKETIO_CORS_ALLOWED_ORIGINS'],
-                     logger=app.debug,
-                     engineio_logger=app.debug)
+    socketio.init_app(app,
+                      message_queue=app.config['SOCKETIO_MESSAGE_QUEUE'],
+                      cors_allowed_origins=app.config['SOCKETIO_CORS_ALLOWED_ORIGINS'],
+                      logger=app.debug,
+                      engineio_logger=app.debug)
     celery.conf.update(app.config)
     mail.init_app(app)
 
@@ -87,6 +93,18 @@ def create_app(config_name: Optional[str] = None) -> Flask:
 
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix='/api/v1')
+
+    # Register new blueprints
+    app.register_blueprint(live_sessions.bp, url_prefix='/api/v1/live-sessions')
+    app.register_blueprint(admissions.bp, url_prefix='/api/v1/admissions')
+    app.register_blueprint(registrations.bp, url_prefix='/api/v1/registrations')
+    app.register_blueprint(exams.bp, url_prefix='/api/v1/exams')
+    app.register_blueprint(financials.bp, url_prefix='/api/v1/financials')
+    app.register_blueprint(hostel.bp, url_prefix='/api/v1/hostel')
+    app.register_blueprint(library.bp, url_prefix='/api/v1/library')
+    app.register_blueprint(staff.bp, url_prefix='/api/v1/staff')
+    app.register_blueprint(alumni.bp, url_prefix='/api/v1/alumni')
+    app.register_blueprint(curriculum.bp, url_prefix='/api/v1/curriculum')
 
     # Add health check endpoint (unprotected)
     @app.route('/health')
