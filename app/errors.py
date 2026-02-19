@@ -8,12 +8,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class APIError(Exception):
     """Base API exception."""
     status_code = 400
     message = "An error occurred"
 
-    def __init__(self, message: str = None, status_code: int = None, 
+    def __init__(self, message: str = None, status_code: int = None,
                  payload: dict = None):
         if message:
             self.message = message
@@ -27,33 +28,39 @@ class APIError(Exception):
         rv['status'] = 'error'
         return rv
 
+
 class ValidationError(APIError):
     status_code = 400
     message = "Validation error"
+
 
 class AuthenticationError(APIError):
     status_code = 401
     message = "Authentication failed"
 
+
 class AuthorizationError(APIError):
     status_code = 403
     message = "Permission denied"
+
 
 class NotFoundError(APIError):
     status_code = 404
     message = "Resource not found"
 
+
 class ConflictError(APIError):
     status_code = 409
     message = "Resource conflict"
+
 
 class RateLimitError(APIError):
     status_code = 429
     message = "Rate limit exceeded"
 
+
 def register_error_handlers(app):
     """Register error handlers for the Flask app."""
-    
     @app.errorhandler(APIError)
     def handle_api_error(error):
         response = jsonify(error.to_dict())
@@ -73,7 +80,6 @@ def register_error_handlers(app):
     def handle_unhandled_error(error):
         logger.exception("Unhandled exception")
         db.session.rollback()
-        # Optionally send to Sentry
         if app.config.get('SENTRY_DSN'):
             from sentry_sdk import capture_exception
             capture_exception(error)
