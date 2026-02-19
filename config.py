@@ -1,7 +1,6 @@
 import os
 from datetime import timedelta
 from typing import Optional, Dict, Any
-import logging
 
 class Config:
     # Flask
@@ -12,10 +11,7 @@ class Config:
     PROPAGATE_EXCEPTIONS: bool = True
 
     # Database
-    SQLALCHEMY_DATABASE_URI: str = os.environ.get(
-        'DATABASE_URL', 
-        'postgresql://user:pass@db:5432/changex'
-    )
+    SQLALCHEMY_DATABASE_URI: str = os.environ.get('DATABASE_URL', 'postgresql://user:pass@db:5432/changex')
     SQLALCHEMY_TRACK_MODIFICATIONS: bool = False
     SQLALCHEMY_ENGINE_OPTIONS: Dict[str, Any] = {
         'pool_size': int(os.environ.get('DB_POOL_SIZE', 10)),
@@ -102,10 +98,14 @@ class Config:
     TWILIO_AUTH_TOKEN: Optional[str] = os.environ.get('TWILIO_AUTH_TOKEN')
     TWILIO_PHONE_NUMBER: Optional[str] = os.environ.get('TWILIO_PHONE_NUMBER')
 
-    # Payment (Stripe)
+    # Payment (Stripe) – kept for compatibility; Paystack added separately
     STRIPE_SECRET_KEY: Optional[str] = os.environ.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET: Optional[str] = os.environ.get('STRIPE_WEBHOOK_SECRET')
     STRIPE_CURRENCY: str = os.environ.get('STRIPE_CURRENCY', 'usd')
+
+    # Paystack (Nigeria)
+    PAYSTACK_SECRET_KEY: Optional[str] = os.environ.get('PAYSTACK_SECRET_KEY')
+    PAYSTACK_PUBLIC_KEY: Optional[str] = os.environ.get('PAYSTACK_PUBLIC_KEY')
 
     # Monitoring & Error Tracking
     SENTRY_DSN: Optional[str] = os.environ.get('SENTRY_DSN')
@@ -122,6 +122,9 @@ class Config:
         'predictive_analytics': os.environ.get('FEATURE_PREDICTIVE', '1') == '1',
         'realtime_notifications': os.environ.get('FEATURE_REALTIME', '1') == '1',
         'gamification': os.environ.get('FEATURE_GAMIFICATION', '0') == '1',
+        'video_conferencing': os.environ.get('FEATURE_VIDEO', '1') == '1',
+        'proctoring': os.environ.get('FEATURE_PROCTORING', '0') == '1',
+        'paystack': os.environ.get('FEATURE_PAYSTACK', '0') == '1',
     }
 
     # Compliance (GDPR)
@@ -137,9 +140,13 @@ class Config:
     DEFAULT_PAGE_SIZE: int = 20
     MAX_PAGE_SIZE: int = 100
 
+    # Jitsi
+    JITSI_BASE_URL: str = os.environ.get('JITSI_BASE_URL', 'https://meet.jit.si/')
+
     @classmethod
     def get_feature_flag(cls, name: str) -> bool:
         return cls.FEATURE_FLAGS.get(name, False)
+
 
 class DevelopmentConfig(Config):
     DEBUG: bool = True
@@ -149,6 +156,7 @@ class DevelopmentConfig(Config):
     RATELIMIT_ENABLED: bool = False
     SECURITY_HEADERS: Dict[str, str] = {}  # Disable HSTS in dev
     CSP_POLICY: Dict[str, Any] = {}  # Disable CSP in dev
+
 
 class TestingConfig(Config):
     TESTING: bool = True
@@ -163,10 +171,12 @@ class TestingConfig(Config):
     CSP_POLICY: Dict[str, Any] = {}
     FEATURE_FLAGS: Dict[str, bool] = {k: False for k in Config.FEATURE_FLAGS}
 
+
 class ProductionConfig(Config):
     DEBUG: bool = False
     TESTING: bool = False
     # Production-specific overrides can go here
+
 
 config = {
     'development': DevelopmentConfig,
