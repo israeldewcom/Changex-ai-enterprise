@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def jwt_required(fn: Callable) -> Callable:
     """Require a valid JWT token, sets g.current_user."""
     @wraps(fn)
@@ -30,8 +31,9 @@ def jwt_required(fn: Callable) -> Callable:
         return fn(*args, **kwargs)
     return wrapper
 
-def role_required(required_role: str, 
-                  institution_id_param: str = 'institution_id', 
+
+def role_required(required_role: str,
+                  institution_id_param: str = 'institution_id',
                   allow_admin: bool = True) -> Callable:
     """
     Check if user has required role in institution.
@@ -41,7 +43,7 @@ def role_required(required_role: str,
         @wraps(fn)
         def wrapper(*args, **kwargs):
             # Get institution_id from kwargs, json, or args
-            inst_id = (kwargs.get(institution_id_param) or 
+            inst_id = (kwargs.get(institution_id_param) or
                        request.json.get('institution_id') if request.json else None or
                        request.args.get('institution_id'))
             if not inst_id:
@@ -61,25 +63,24 @@ def role_required(required_role: str,
                 user_id=g.current_user.id,
                 institution_id=inst_id
             ).join(Role).filter(Role.name == required_role).first()
-
             if not user_role:
                 return jsonify({'msg': f'Role {required_role} required in this institution'}), 403
             return fn(*args, **kwargs)
         return wrapper
     return decorator
 
-def permissions_required(permission: str, 
+
+def permissions_required(permission: str,
                          institution_id_param: str = 'institution_id') -> Callable:
     """Check if user has specific permission in institution via role permissions."""
     def decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            inst_id = (kwargs.get(institution_id_param) or 
+            inst_id = (kwargs.get(institution_id_param) or
                        request.json.get('institution_id') if request.json else None or
                        request.args.get('institution_id'))
             if not inst_id:
                 return jsonify({'msg': 'Institution ID required'}), 400
-
             user_roles = UserRole.query.filter_by(
                 user_id=g.current_user.id,
                 institution_id=inst_id
@@ -91,36 +92,74 @@ def permissions_required(permission: str,
         return wrapper
     return decorator
 
+
 def admin_required(institution_id_param: str = 'institution_id') -> Callable:
     """Convenience decorator for admin role."""
     return role_required('admin', institution_id_param)
 
+
 def faculty_required(institution_id_param: str = 'institution_id') -> Callable:
     return role_required('faculty', institution_id_param)
+
 
 def student_required(institution_id_param: str = 'institution_id') -> Callable:
     return role_required('student', institution_id_param)
 
+
 def parent_required(institution_id_param: str = 'institution_id') -> Callable:
     return role_required('parent', institution_id_param)
+
 
 def institution_member_required(institution_id_param: str = 'institution_id') -> Callable:
     """Check if user has any role in the institution."""
     def decorator(fn: Callable) -> Callable:
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            inst_id = (kwargs.get(institution_id_param) or 
+            inst_id = (kwargs.get(institution_id_param) or
                        request.json.get('institution_id') if request.json else None or
                        request.args.get('institution_id'))
             if not inst_id:
                 return jsonify({'msg': 'Institution ID required'}), 400
-
             user_role = UserRole.query.filter_by(
                 user_id=g.current_user.id,
                 institution_id=inst_id
             ).first()
             if not user_role:
                 return jsonify({'msg': 'User not a member of this institution'}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def parent_of_student(student_id_param: str = 'student_id') -> Callable:
+    """Check if current user is parent of the student specified in URL."""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            student_id = kwargs.get(student_id_param) or request.args.get(student_id_param)
+            if not student_id:
+                return jsonify({'msg': 'Student ID required'}), 400
+            student = db.session.get(User, student_id)
+            if not student:
+                return jsonify({'msg': 'Student not found'}), 404
+            if g.current_user not in student.parents:
+                return jsonify({'msg': 'You are not a parent of this student'}), 403
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def platform_admin_required() -> Callable:
+    """Check if user has platform-wide admin role (institution_id=None)."""
+    def decorator(fn: Callable) -> Callable:
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            platform_admin = UserRole.query.filter_by(
+                user_id=g.current_user.id,
+                institution_id=None
+            ).join(Role).filter(Role.name == 'platform_admin').first()
+            if not platform_admin:
+                return jsonify({'msg': 'Platform admin required'}), 403
             return fn(*args, **kwargs)
         return wrapper
     return decorator
