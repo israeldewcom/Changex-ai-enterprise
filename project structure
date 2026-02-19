@@ -1,0 +1,88 @@
+changex_eduspace/
+├── app/
+│   ├── __init__.py
+│   ├── models.py
+│   ├── auth.py
+│   ├── errors.py
+│   ├── types.py                 # New: Type hints and protocols
+│   ├── extensions.py             # New: Centralized extension initialization
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── cache.py
+│   │   ├── validators.py
+│   │   ├── s3.py
+│   │   ├── email.py              # Enhanced with SendGrid
+│   │   ├── sms.py                # Enhanced with Twilio
+│   │   ├── logging.py            # New: Structured logging
+│   │   ├── pagination.py         # Enhanced with cursor pagination
+│   │   ├── security.py           # New: Security helpers (CSP, etc.)
+│   │   ├── compliance.py         # New: GDPR consent, data anonymization
+│   │   ├── metrics.py            # New: Prometheus metrics
+│   │   └── websocket.py          # New: SocketIO event handlers
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── enrollment.py
+│   │   ├── grading.py
+│   │   ├── payment.py
+│   │   ├── notification.py
+│   │   ├── analytics.py
+│   │   ├── predictive.py
+│   │   └── realtime.py           # New: Real-time notification service
+│   ├── api/
+│   │   └── v1/
+│   │       ├── __init__.py
+│   │       ├── institutions.py
+│   │       ├── users.py
+│   │       ├── auth.py
+│   │       ├── courses.py
+│   │       ├── assignments.py
+│   │       ├── grades.py
+│   │       ├── attendance.py
+│   │       ├── payments.py
+│   │       ├── analytics.py
+│   │       ├── webhooks.py
+│   │       └── realtime.py       # New: SocketIO events namespace
+│   ├── tasks/
+│   │   ├── __init__.py
+│   │   ├── email_tasks.py
+│   │   ├── report_tasks.py
+│   │   ├── model_training.py
+│   │   └── monitoring.py         # New: Health checks, heartbeat
+│   └── cli/
+│       ├── __init__.py
+│       ├── seed.py
+│       ├── train_model.py
+│       ├── backup.py
+│       └── compliance.py         # New: GDPR data export/deletion
+├── migrations/
+├── tests/
+│   ├── conftest.py
+│   ├── factories.py              # New: Factory boy factories
+│   ├── test_api/
+│   │   ├── test_auth.py
+│   │   ├── test_institutions.py
+│   │   └── ...
+│   ├── test_services/
+│   └── test_utils/
+├── scripts/
+│   ├── backup_db.sh
+│   ├── deploy.sh
+│   └── monitor.sh                # New: Health check script
+├── docs/
+│   └── swagger.yaml
+├── monitoring/                   # New: Prometheus & Grafana configs
+│   ├── prometheus.yml
+│   └── grafana-dashboards/
+├── .env.example
+├── .flaskenv
+├── config.py
+├── docker-compose.yml
+├── docker-compose.override.yml   # New: For development
+├── Dockerfile
+├── requirements.txt
+├── requirements-dev.txt
+├── pyproject.toml
+├── .github/workflows/ci.yml
+├── .github/workflows/cd.yml      # New: Continuous deployment
+├── .pre-commit-config.yaml       # New: Pre-commit hooks
+└── README.md
